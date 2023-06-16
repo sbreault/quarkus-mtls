@@ -1,0 +1,20 @@
+# https://quarkus.io/blog/quarkus-mutual-tls/
+
+## create quarkus apps (server and client)
+mvn io.quarkus:quarkus-maven-plugin:1.4.1.Final:create -DprojectGroupId=org.acme -DprojectArtifactId=quarkus-server-mtls -DclassName="org.acme.server.mtls.GreetingResource" -Dextensions="rest-client, resteasy-jsonb, kubernetes-client" -Dpath="/hello-server"
+
+
+mvn io.quarkus:quarkus-maven-plugin:1.4.1.Final:create -DprojectGroupId=org.acme -DprojectArtifactId=quarkus-client-mtls -DclassName="org.acme.client.mtls.GreetingResource" -Dextensions="rest-client, resteasy-jsonb, kubernetes-client" -Dpath="/hello-client"
+
+## create server and client key stores
+keytool -genkeypair -storepass password -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore quarkus-server-mtls/src/main/resources/META-INF/resources/server.keystore
+
+keytool -genkeypair -storepass password -keyalg RSA -keysize 2048 -dname "CN=client" -alias client -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore quarkus-client-mtls/src/main/resources/META-INF/resources/client.keystore
+
+## create trust store files for both server (holding client cert) and client (holding server cert)
+Here we simply make copies of one app's keystore and name it as truststore for the other app.
+
+copy quarkus-server-mtls\src\main\resources\META-INF\resources\server.keystore quarkus-client-mtls\src\main\resources\META-INF\resources\client.truststore
+
+copy quarkus-client-mtls\src\main\resources\META-INF\resources\client.keystore quarkus-server-mtls\src\main\resources\META-INF\resources\server.truststore
+
